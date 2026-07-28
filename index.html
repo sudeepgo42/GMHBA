@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GMHBA/Frank Sponsorship Evaluation Tool</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -229,6 +228,7 @@ button{font-family:inherit;cursor:pointer}input,textarea{font-family:inherit}
 </div>
 <div id="cootot" style="display:none;margin-top:10px;padding:10px 14px;background:var(--teal-lt);border:1px solid var(--teal);border-radius:8px;font-size:12.5px;color:var(--teal-dk);font-weight:600"></div></div>
 <div id="gate" class="hid" style="background:#fff;border:1.5px dashed var(--bdr);border-radius:10px;padding:48px 32px;text-align:center"><p style="font-size:15px;font-weight:600;color:var(--navy);margin-bottom:6px">Select a brand to begin</p><p style="font-size:13px;color:var(--sub)">Choose whether this opportunity is being evaluated for GMHBA or Frank. The framework is identical for both; the choice is recorded against the evaluation.</p></div>
+<div id="savedMgr" class="hid"></div>
 <div class="grid" id="gz"><div class="nav-col" id="nav"></div><div id="qp"></div><div class="res-col" id="rp"></div></div>
 </div>
 <div id="cv" class="hid"></div>
@@ -308,45 +308,8 @@ else{hl.innerHTML='<div style="display:flex;align-items:center;gap:12px"><img sr
 const sel=document.getElementById('brs');if(sel)sel.value=S.brand}
 function pN(v){const n=parseFloat(String(v||'').replace(/[^0-9.]/g,''));return isNaN(n)?0:n}
 function fmtC(v){const d=String(v||'').replace(/[^0-9]/g,'');return d?'$'+Number(d).toLocaleString('en-AU'):''}
-function pS(){try{localStorage.setItem('gmhbaEvalV2',JSON.stringify({ans:S.ans,qn:S.qn,ad:S.ad,fee:S.fee,bud:S.bud,act:S.act,comp:S.comp,pkg:S.pkg,pkgval:S.pkgval,brand:S.brand,name:document.getElementById('sn').value,saved:S.saved,userName:S.userName||''}))}catch(e){}}
-
-// ─── SUPABASE ───
-const SB_URL='https://zgjbjnqwqkddmglevato.supabase.co';
-const SB_KEY='sb_publishable_AcQb3xltIXsq_h4iKIKfQA_nPv8IEly';
-let sb;
-try{sb=window.supabase.createClient(SB_URL,SB_KEY)}catch(e){console.warn('Supabase client failed to init:',e);sb=null}
-
-async function cloudLoad(){
-  if(!sb)return false;
-  try{
-    const{data,error}=await sb.from('evaluations').select('*').order('created_at',{ascending:false});
-    if(error){console.warn('Supabase load error:',error);return false}
-    S.saved=data.map(r=>({_id:r.id,name:r.partner_name,brand:r.brand,ans:r.answers||{},qn:r.qual_notes||'',fee:r.financial?.fee||'',bud:r.financial?.bud||'',act:r.financial?.act||'',comp:r.financial?.comp||'',pkg:r.financial?.pkg||{},pkgval:r.financial?.pkgval||'',ts:r.created_at,by:r.created_by||''}));
-    pS();R();return true
-  }catch(e){console.warn('Supabase load failed:',e);return false}
-}
-
-async function cloudSave(ev){
-  if(!sb)return null;
-  const v=gV(ev.ans);const rk=gds(ev.ans,RK.key);const rkl=rk>0?rl(rk):null;
-  try{
-    const{data,error}=await sb.from('evaluations').insert({
-      created_by:ev.by||'Unknown',brand:ev.brand||'',partner_name:ev.name,
-      answers:ev.ans,financial:{fee:ev.fee,bud:ev.bud,act:ev.act,comp:ev.comp,pkg:ev.pkg,pkgval:ev.pkgval},
-      qual_notes:ev.qn,weighted_score:v.ws,recommendation:v.rec.l,
-      risk_score:rk||null,risk_label:rkl?rkl.l:null
-    }).select().single();
-    if(error){console.warn('Supabase save error:',error);return null}
-    return data.id
-  }catch(e){console.warn('Supabase save failed:',e);return null}
-}
-
-async function cloudDelete(id){
-  if(!sb||!id)return;
-  try{await sb.from('evaluations').delete().eq('id',id)}catch(e){console.warn('Supabase delete failed:',e)}
-}
-
-function lS(){try{const d=JSON.parse(localStorage.getItem('gmhbaEvalV2'));if(d){S.ans=d.ans||{};S.qn=d.qn||'';S.ad=d.ad||0;S.fee=d.fee||'';S.bud=d.bud||'';S.act=d.act||'';S.comp=d.comp||'';S.pkg=(d.pkg&&typeof d.pkg==='object')?d.pkg:{};S.pkgval=d.pkgval||'';S.brand=d.brand||'';S.saved=d.saved||[];S.userName=d.userName||'';document.getElementById('sn').value=d.name||'';document.getElementById('fee').value=S.fee;document.getElementById('bud').value=S.bud;document.getElementById('act').value=S.act;document.getElementById('cb').value=S.comp;document.getElementById('pkgval').value=S.pkgval;renderPkg()}}catch(e){}
+function pS(){try{localStorage.setItem('gmhbaEvalV2',JSON.stringify({ans:S.ans,qn:S.qn,ad:S.ad,fee:S.fee,bud:S.bud,act:S.act,comp:S.comp,pkg:S.pkg,pkgval:S.pkgval,brand:S.brand,name:document.getElementById('sn').value,saved:S.saved}))}catch(e){}}
+function lS(){try{const d=JSON.parse(localStorage.getItem('gmhbaEvalV2'));if(d){S.ans=d.ans||{};S.qn=d.qn||'';S.ad=d.ad||0;S.fee=d.fee||'';S.bud=d.bud||'';S.act=d.act||'';S.comp=d.comp||'';S.pkg=(d.pkg&&typeof d.pkg==='object')?d.pkg:{};S.pkgval=d.pkgval||'';S.brand=d.brand||'';S.saved=d.saved||[];document.getElementById('sn').value=d.name||'';document.getElementById('fee').value=S.fee;document.getElementById('bud').value=S.bud;document.getElementById('act').value=S.act;document.getElementById('cb').value=S.comp;document.getElementById('pkgval').value=S.pkgval;renderPkg()}}catch(e){}
 applyTheme();uT()}
 function uT(){const el=document.getElementById('cootot');if(!el)return;const f=pN(S.fee),a=pN(S.act);if(f>0&&a>0){el.style.display='block';el.innerHTML='Forecast total cost of opportunity: <span style="font-family:\'JetBrains Mono\',monospace;font-weight:700">'+fmtC(String(f+a))+'</span> &nbsp;<span style="font-weight:400;color:var(--sub)">(proposed fee + expected activation spend)</span>'}else{el.style.display='none';el.innerHTML=''}}
 function gV(a){const ws=gwt(a);let rec=gr(ws);const rdn=RK.questions.every((_,qi)=>a[RK.key+'_'+qi]!==undefined);const rk=rdn?gds(a,RK.key):0;if(rdn&&rk>3.5&&ws>=curBands()[1])rec={...rec,c:'var(--amb)',ch:'#B8860B',bg:'var(--amb-lt)',l:'Conditionally Proceed'};return{ws,rec,rk}}
@@ -357,7 +320,24 @@ function sc(s){return s<=2?'#B91C1C':s<=3?'#B8860B':'#12805C'}
 function rl(s){if(s>3.5)return{l:'High Risk',c:'#B91C1C'};if(s>2)return{l:'Moderate Risk',c:'#B8860B'};return{l:'Low Risk',c:'#12805C'}}
 function rsc(s){return s>3.5?'#B91C1C':s>2?'#B8860B':'#12805C'}
 
-function R(){const on=!!S.brand;document.getElementById('gate').classList.toggle('hid',on);document.getElementById('gz').classList.toggle('hid',!on);document.getElementById('fbrow').classList.toggle('hid',!on);['sn','fee','bud'].forEach(id=>{document.getElementById(id).disabled=!on});if(on){rN();rQ();rR()}rH()}
+function R(){const on=!!S.brand;document.getElementById('gate').classList.toggle('hid',on);document.getElementById('gz').classList.toggle('hid',!on);document.getElementById('fbrow').classList.toggle('hid',!on);['sn','fee','bud'].forEach(id=>{document.getElementById(id).disabled=!on});if(on){rN();rQ();rR()}rH();rSM()}
+
+function rSM(){const el=document.getElementById('savedMgr');
+if(S.brand||S.saved.length===0){el.classList.add('hid');el.innerHTML='';return}
+el.classList.remove('hid');
+let h='<div style="background:#fff;border-radius:10px;border:1px solid var(--bdr);padding:24px;margin-top:20px">';
+h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-weight:700;font-size:14px;color:var(--navy)">Saved Evaluations ('+S.saved.length+')</span><div style="display:flex;gap:8px">';
+if(S.saved.length>=2)h+='<button class="hbtn" style="font-size:11px;padding:6px 12px" onclick="tv()">Compare</button>';
+h+='<button class="hbtn hbtn-teal" style="font-size:11px;padding:6px 12px" onclick="xP()">Export PDF</button></div></div>';
+S.saved.forEach((ev,i)=>{const ws=gwt(ev.ans),v=gV(ev.ans);
+h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--lt);border-radius:8px;margin-bottom:6px"><div><span style="font-size:13px;font-weight:600;color:var(--txt)">'+ev.name+'</span>';
+if(TH[ev.brand])h+=' <span style="font-size:10px;color:var(--sub)">\u00b7 '+TH[ev.brand].name.split(' ')[0]+'</span>';
+const parts=[];if(ev.by)parts.push(ev.by);if(ev.ts)parts.push(new Date(ev.ts).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}));
+if(parts.length)h+='<div style="font-size:11px;color:var(--sub);margin-top:2px">'+parts.join(' \u00b7 ')+'</div>';
+h+='</div><div style="display:flex;align-items:center;gap:10px"><span style="font-family:\'JetBrains Mono\',monospace;font-size:13px;font-weight:600;color:'+v.rec.ch+'">'+ws.toFixed(2)+'</span><span style="font-size:11px;color:'+v.rec.ch+';font-weight:600">'+v.rec.l+'</span><button onclick="dlM('+i+')" style="font-size:11px;font-weight:600;color:var(--red);background:none;border:1px solid var(--red);border-radius:4px;padding:2px 8px;cursor:pointer;opacity:0.7" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">Remove</button></div></div>'});
+h+='</div>';el.innerHTML=h}
+
+function dlM(i){if(!confirm('Remove "'+S.saved[i].name+'" from saved evaluations?'))return;S.saved.splice(i,1);pS();R()}
 function rH(){const e=document.getElementById('ha');let h='';
 if(S.view!=='edit'){
 if(S.brand)h+=`<button class="hbtn" onclick="so()">Start Over</button>`;
@@ -404,26 +384,21 @@ const ok=sd2&&rd;
 if(ok){h+=`<div class="rc"><span style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Qualitative Checkpoint</span><p style="font-size:11px;color:var(--sub);margin-bottom:10px;line-height:1.5">Does this score feel right? Record any context, risk flags, or instinct the numbers do not capture.</p><textarea class="qabox" rows="3" placeholder="e.g. Strong local sentiment, but partner governance concerns..." oninput="S.qn=this.value;pS()">${S.qn}</textarea></div>`;
 h+=`<div style="display:flex;gap:8px"><button class="btn" style="background:var(--teal);flex:1" onclick="sv()">Save Evaluation</button><button class="btn" style="background:var(--sub)" onclick="rs()">Clear Answers</button></div>`}
 if(S.saved.length>0){h+='<div style="margin-top:18px"><span style="font-size:10px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px">Saved ('+S.saved.length+')</span>';
-S.saved.forEach((ev,i)=>{const ews=gwt(ev.ans);h+=`<div class="svi"><div><span class="svn">${ev.name}${TH[ev.brand]?` <span style="font-size:10px;font-weight:500;color:var(--sub)">\u00b7 ${TH[ev.brand].name.split(' ')[0]}</span>`:''}</span>${ev.by?`<div style="font-size:10px;color:var(--sub);margin-top:1px">${ev.by}${ev.ts?' \u00b7 '+new Date(ev.ts).toLocaleDateString('en-AU',{day:'numeric',month:'short'}):''}</div>`:''}</div><div style="display:flex;align-items:center;gap:8px"><span class="svs" style="color:${sc(ews)}">${ews.toFixed(2)}</span>${ev._id?'<span style="width:6px;height:6px;border-radius:3px;background:var(--teal);flex-shrink:0" title="Synced to cloud"></span>':''}<button class="svd" onclick="dl(${i})">\u00d7</button></div></div>`});
+S.saved.forEach((ev,i)=>{const ews=gwt(ev.ans);h+=`<div class="svi"><span class="svn">${ev.name}${TH[ev.brand]?` <span style="font-size:10px;font-weight:500;color:var(--sub)">\u00b7 ${TH[ev.brand].name.split(' ')[0]}</span>`:''}</span><div style="display:flex;align-items:center;gap:8px"><span class="svs" style="color:${sc(ews)}">${ews.toFixed(2)}</span><button class="svd" onclick="dl(${i})">\u00d7</button></div></div>`});
 h+='<div style="display:flex;gap:6px;margin-top:8px"><button class="btn" style="background:var(--navy);flex:1;font-size:11px;padding:7px 10px" onclick="tv()">Compare</button><button class="btn" style="background:var(--teal);flex:1;font-size:11px;padding:7px 10px" onclick="xP()">Export PDF</button></div></div>'}
 document.getElementById('rp').innerHTML=h}
 
 function sd(i){S.ad=i;R();window.scrollTo({top:200,behavior:'smooth'})}
 function sa(k,v){S.ans[k]=v;pS();R()}
-async function sv(){const n=document.getElementById('sn').value.trim();if(!n){alert('Enter a sponsorship or partner name.');return}
-  let by=S.userName||'';
-  if(!by){by=prompt('Enter your name or initials (this will be saved with the evaluation):');if(!by)return;S.userName=by;pS()}
-  const ev={name:n,ans:{...S.ans},qn:S.qn,fee:S.fee,bud:S.bud,act:S.act,comp:S.comp,pkg:{...S.pkg},pkgval:S.pkgval,brand:S.brand,ts:new Date().toISOString(),by};
-  const cloudId=await cloudSave(ev);
-  if(cloudId){ev._id=cloudId;S.saved.unshift(ev);pS();R()}
-  else{S.saved.unshift(ev);pS();R();alert('Saved locally. Cloud sync failed; the evaluation will appear only in this browser.')}}
+function sv(){const n=document.getElementById('sn').value.trim();if(!n){alert('Enter a sponsorship or partner name.');return}S.saved.push({name:n,ans:{...S.ans},qn:S.qn,fee:S.fee,bud:S.bud,act:S.act,comp:S.comp,pkg:{...S.pkg},pkgval:S.pkgval,brand:S.brand,ts:new Date().toISOString()});pS();R()}
 function rs(){S.ans={};S.qn='';S.ad=0;S.fee='';S.bud='';S.act='';S.comp='';S.pkg={};S.pkgval='';document.getElementById('sn').value='';document.getElementById('fee').value='';document.getElementById('bud').value='';document.getElementById('act').value='';document.getElementById('cb').value='';document.getElementById('pkgval').value='';renderPkg();pS();uT();R()}
-async function dl(i){const ev=S.saved[i];if(ev&&ev._id)await cloudDelete(ev._id);S.saved.splice(i,1);pS();R()}
+function dl(i){S.saved.splice(i,1);pS();R()}
+function dlC(i){if(!confirm('Remove "'+S.saved[i].name+'" from saved evaluations?'))return;S.saved.splice(i,1);pS();if(S.saved.length<2){tv()}else{rC()}rH()}
 function tv(){if(S.view==='eval'){S.view='compare';document.getElementById('ev').classList.add('hid');document.getElementById('cv').classList.remove('hid');rC()}else{S.view='eval';document.getElementById('ev').classList.remove('hid');document.getElementById('cv').classList.add('hid')}rH()}
 
 function rC(){const el=document.getElementById('cv');if(S.saved.length<2){el.innerHTML='<div style="padding:32px;text-align:center"><p style="color:var(--sub)">Save at least two evaluations to compare.</p><button class="btn" style="background:var(--teal);margin-top:12px" onclick="tv()">Back</button></div>';return}
 let h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px"><h2 style="font-weight:800;font-size:22px;color:var(--navy)">Compare Evaluations</h2><div style="display:flex;gap:8px"><button class="hbtn hbtn-teal" onclick="xP()">Export PDF</button><button class="hbtn" onclick="tv()">Back</button></div></div><div style="overflow-x:auto"><table class="ct"><thead><tr><th>Dimension</th>';
-S.saved.forEach(ev=>{h+='<th style="text-align:center"><div style="font-weight:700">'+ev.name+'</div><div style="font-size:10px;font-weight:500;color:var(--sub)">'+(TH[ev.brand]?TH[ev.brand].name:'')+'</div></th>'});h+='</tr></thead><tbody>';
+S.saved.forEach((ev,i)=>{h+='<th style="text-align:center"><div style="font-weight:700">'+ev.name+'</div><div style="font-size:10px;font-weight:500;color:var(--sub)">'+(TH[ev.brand]?TH[ev.brand].name:'')+'</div><button onclick="dlC('+i+')" style="margin-top:6px;font-size:10px;font-weight:600;color:var(--red);background:none;border:1px solid var(--red);border-radius:4px;padding:2px 8px;cursor:pointer;opacity:0.7;transition:opacity .15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">Remove</button></th>'});h+='</tr></thead><tbody>';
 SC.forEach(d=>{h+='<tr><td>'+d.label+' <span style="font-size:10px;color:var(--sub)">('+W(d)+'%)</span></td>';S.saved.forEach(ev=>{const s=gds(ev.ans,d.key);h+='<td class="sc" style="color:'+sc(s)+'">'+(s?s.toFixed(1):'-')+'/5</td>'});h+='</tr>'});
 h+='<tr style="border-top:2px solid var(--navy)"><td style="font-weight:700">Weighted Score</td>';S.saved.forEach(ev=>{const v=gV(ev.ans);h+='<td class="sc"><div style="font-size:18px;color:'+v.rec.ch+'">'+v.ws.toFixed(2)+'</div><div style="font-size:11px;font-weight:600;color:'+v.rec.ch+'">'+v.rec.l+'</div></td>'});
 const hasB=S.saved.some(ev=>pN(ev.fee)>0&&pN(ev.bud)>0&&pN(ev.act)>0);
@@ -492,8 +467,6 @@ alert('Changes applied for this session. They will reset to the v2.1 defaults th
 function resetEdits(){CW=null;CB=null;rE();rH()}
 
 renderPkg();lS();R();
-// Load from cloud (async, will re-render when complete)
-cloudLoad().then(ok=>{if(ok)console.log('Loaded evaluations from Supabase');else console.log('Using localStorage fallback')});
 </script>
 </body>
 </html>
